@@ -3,6 +3,11 @@ import AppError from '../utils/AppError.js';
 /**
  * Middleware centralizado para manejo de errores de Express.
  */
+/**
+ * Middleware centralizado de gestión de errores para Express.
+ * Detecta tipos específicos de errores (Zod, Mongoose, JWT, MongoDB) y los
+ * normaliza en respuestas JSON estandarizadas.
+ */
 export const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';

@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+/**
+ * Esquema para el registro inicial de un usuario.
+ * - email: Validado como formato email, pasado a minúsculas y sin espacios.
+ * - password: Mínimo 8 caracteres obligatorios.
+ */
 export const registerSchema = z.object({
   body: z.object({
     email: z.string().email('Email inválido').transform((val) => val.toLowerCase().trim()),
@@ -7,12 +12,19 @@ export const registerSchema = z.object({
   })
 });
 
+/**
+ * Esquema para la validación del código enviado por email.
+ * - code: Debe tener exactamente 6 caracteres.
+ */
 export const validateAccountSchema = z.object({
   body: z.object({
     code: z.string().length(6, 'El código debe tener exactamente 6 dígitos')
   })
 });
 
+/**
+ * Esquema para el inicio de sesión.
+ */
 export const loginSchema = z.object({
   body: z.object({
     email: z.string().email('Email inválido').transform((val) => val.toLowerCase().trim()),
@@ -20,6 +32,9 @@ export const loginSchema = z.object({
   })
 });
 
+/**
+ * Esquema para completar los datos personales del usuario (Onboarding Fase 1).
+ */
 export const onboardingPersonalSchema = z.object({
   body: z.object({
     name: z.string().min(1, 'El nombre es obligatorio').trim(),
@@ -28,6 +43,12 @@ export const onboardingPersonalSchema = z.object({
   })
 });
 
+/**
+ * Esquema para registrar los datos de la compañía (Onboarding Fase 2).
+ * Utiliza discriminatedUnion para validar de forma condicional:
+ * - Si isFreelance es FALSE: Valida todos los datos de la empresa (nombre, cif, dirección).
+ * - Si isFreelance es TRUE: No requiere datos adicionales ya que se usarán los del usuario.
+ */
 export const onboardingCompanySchema = z.object({
   body: z.discriminatedUnion('isFreelance', [
     z.object({
@@ -48,6 +69,10 @@ export const onboardingCompanySchema = z.object({
   ])
 });
 
+/**
+ * Esquema para el cambio de contraseña.
+ * Incluye una validación cruzada (.refine) para asegurar que la nueva sea distinta a la actual.
+ */
 export const updatePasswordSchema = z.object({
   body: z.object({
     currentPassword: z.string().min(1, 'La contraseña actual es obligatoria'),
@@ -58,6 +83,9 @@ export const updatePasswordSchema = z.object({
   })
 });
 
+/**
+ * Esquema para invitar a nuevos compañeros a la plataforma.
+ */
 export const inviteUserSchema = z.object({
   body: z.object({
     email: z.string().email('Email inválido').transform((val) => val.toLowerCase().trim()),
