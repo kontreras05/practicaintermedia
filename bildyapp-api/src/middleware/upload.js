@@ -9,6 +9,10 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+/**
+ * Configuración de Multer para la subida de logos.
+ * Almacena archivos en la carpeta /uploads con nombres únicos.
+ */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir);

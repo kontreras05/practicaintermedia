@@ -5,13 +5,23 @@ import { User } from '../models/User.js';
 import { Company } from '../models/Company.js';
 import { notificationService } from '../services/notification.service.js';
 
-// ---- HELPERS ----
+/**
+ * Genera un token JWT firmado.
+ * @param {string} id - ID del usuario.
+ * @param {string} expiresIn - Tiempo de expiración (ej: '15m', '7d').
+ * @returns {string} Token firmado.
+ */
 const signToken = (id, expiresIn) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret', {
     expiresIn
   });
 };
 
+/**
+ * Envía los tokens de acceso y refresco al cliente en la respuesta.
+ * @param {Object} user - Documento de usuario de Mongoose.
+ * @param {Object} res - Objeto respuesta de Express.
+ */
 const createSendTokens = (user, res) => {
   const accessToken = signToken(user._id, '15m');
   const refreshToken = signToken(user._id, '7d');
@@ -30,12 +40,20 @@ const createSendTokens = (user, res) => {
   });
 };
 
+/**
+ * Genera un código aleatorio de 6 dígitos para validación.
+ * @returns {string} Código de 6 dígitos.
+ */
 const generateCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
 // ---- ENDPOINTS ----
 
+/**
+ * Registra un nuevo usuario en el sistema.
+ * Genera un código de verificación y emite evento user:registered.
+ */
 export const register = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -64,6 +82,10 @@ export const register = async (req, res, next) => {
   }
 };
 
+/**
+ * Valida el email de un usuario mediante el código de 6 dígitos.
+ * Controla el número de intentos permitidos.
+ */
 export const validateEmail = async (req, res, next) => {
   try {
     const { code } = req.body;
@@ -98,6 +120,9 @@ export const validateEmail = async (req, res, next) => {
   }
 };
 
+/**
+ * Inicia sesión de un usuario verificando email y contraseña.
+ */
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -118,6 +143,9 @@ export const login = async (req, res, next) => {
   }
 };
 
+/**
+ * Actualiza los datos personales del usuario (nombre, apellidos, NIF).
+ */
 export const updatePersonalData = async (req, res, next) => {
   try {
     const { name, lastName, nif } = req.body;
@@ -138,6 +166,10 @@ export const updatePersonalData = async (req, res, next) => {
   }
 };
 
+/**
+ * Actualiza o crea los datos de la compañía asociada al usuario.
+ * Gestiona la lógica de Freelance vs Empresa y asignación de roles.
+ */
 export const updateCompanyData = async (req, res, next) => {
   try {
     const { name, cif, address, isFreelance } = req.body;
@@ -178,6 +210,9 @@ export const updateCompanyData = async (req, res, next) => {
   }
 };
 
+/**
+ * Sube y guarda el logo de la compañía asociada al usuario.
+ */
 export const uploadUserLogo = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -205,6 +240,9 @@ export const uploadUserLogo = async (req, res, next) => {
   }
 };
 
+/**
+ * Obtiene el perfil del usuario autenticado con los datos de su compañía.
+ */
 export const getUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate('company');
@@ -218,6 +256,9 @@ export const getUser = async (req, res, next) => {
   }
 };
 
+/**
+ * Renueva el token de acceso utilizando un refresh token válido.
+ */
 export const refreshToken = async (req, res, next) => {
   try {
     const token = req.body.refreshToken;
@@ -247,6 +288,9 @@ export const refreshToken = async (req, res, next) => {
   }
 };
 
+/**
+ * Cierra la sesión del usuario (informativo).
+ */
 export const logout = async (req, res, next) => {
   try {
     res.status(200).json({
@@ -258,6 +302,9 @@ export const logout = async (req, res, next) => {
   }
 };
 
+/**
+ * Elimina la cuenta del usuario (soporta borrado lógico o físico).
+ */
 export const deleteUser = async (req, res, next) => {
   try {
     const soft = req.query.soft === 'true';
@@ -279,6 +326,9 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
+/**
+ * Cambia la contraseña del usuario tras verificar la actual.
+ */
 export const updatePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -298,6 +348,9 @@ export const updatePassword = async (req, res, next) => {
   }
 };
 
+/**
+ * Permite a un administrador invitar a nuevos usuarios a su compañía.
+ */
 export const inviteUser = async (req, res, next) => {
   try {
     const { email, name, lastName } = req.body;

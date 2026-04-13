@@ -2,6 +2,10 @@ import jwt from 'jsonwebtoken';
 import AppError from '../utils/AppError.js';
 import { User } from '../models/User.js';
 
+/**
+ * Middleware para requerir autenticación mediante JWT.
+ * Verifica el token y adjunta el usuario a la petición (req.user).
+ */
 export const requireAuth = async (req, res, next) => {
   try {
     let token;

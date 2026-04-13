@@ -1,5 +1,10 @@
 import AppError from '../utils/AppError.js';
 
+/**
+ * Middleware para validar el cuerpo, parámetros o query de la petición
+ * utilizando un esquema de Zod.
+ * @param {z.ZodObject} schema - El esquema de validación.
+ */
 export const validate = (schema) => async (req, res, next) => {
   try {
     const parsed = await schema.parseAsync({

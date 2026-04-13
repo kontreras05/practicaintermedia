@@ -32,27 +32,33 @@ import {
 const router = Router();
 
 // ---- RUTAS PÚBLICAS ----
+/** 
+ * Endpoints que no requieren autenticación 
+ */
 router.post('/register', validate(registerSchema), register);
 router.post('/login', validate(loginSchema), login);
 router.post('/refresh', refreshToken);
 
 // ---- RUTAS PROTEGIDAS ----
+/**
+ * A partir de aquí, todas las rutas requieren un token JWT válido (req.user)
+ */
 router.use(requireAuth);
 
 router.put('/validation', validate(validateAccountSchema), validateEmail);
 router.post('/logout', logout);
 
-// Onboarding
+/** Onboarding: Completar datos personales y de empresa */
 router.put('/register', validate(onboardingPersonalSchema), updatePersonalData);
 router.patch('/company', validate(onboardingCompanySchema), updateCompanyData);
 router.patch('/logo', uploadLogo, uploadUserLogo);
 
-// Gestión total
+/** Gestión de perfil y cuenta */
 router.get('/', getUser);
 router.put('/password', validate(updatePasswordSchema), updatePassword);
 router.delete('/', deleteUser);
 
-// Invitaciones (solo admin)
+/** Invitaciones: Solo accesibles por usuarios con rol 'admin' */
 router.post('/invite', restrictTo('admin'), validate(inviteUserSchema), inviteUser);
 
 export default router;

@@ -1,3 +1,7 @@
+/**
+ * Punto de arranque del servidor Node.js.
+ * Conecta con la base de datos y lanza el listener de Express.
+ */
 import mongoose from 'mongoose';
 import app from './app.js';
 import { config } from './config/index.js';

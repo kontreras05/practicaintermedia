@@ -4,13 +4,17 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import path from 'path';
 
-import { globalErrorHandler } from './middleware/error-handler.js';
+import { errorHandler } from './middleware/error-handler.js';
 import AppError from './utils/AppError.js';
 import userRoutes from './routes/user.routes.js';
 
+/**
+ * Punto de entrada de la aplicación Express.
+ * Aquí se configuran los middlewares globales, seguridad y rutas.
+ */
 const app = express();
 
-// Set security HTTP headers
+// Middlewares de Seguridad HTTP
 app.use(helmet());
 
 // Limit requests from same API (Rate Limit) -> max 100 requests per 15 minutes
@@ -34,11 +38,11 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/user', userRoutes);
 
 // Manejador de rutas no encontradas (404)
-app.all('*', (req, res, next) => {
+app.use((req, res, next) => {
   next(AppError.notFound(`No se puede encontrar ${req.originalUrl} en este servidor.`));
 });
 
 // Middleware centralizado de errores
-app.use(globalErrorHandler);
+app.use(errorHandler);
 
 export default app;
