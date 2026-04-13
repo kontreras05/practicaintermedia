@@ -4,9 +4,9 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import path from 'path';
 
-// Importa el global error handler y AppError
-// import { globalErrorHandler } from './middleware/error-handler.js';
-// import AppError from './utils/AppError.js';
+import { globalErrorHandler } from './middleware/error-handler.js';
+import AppError from './utils/AppError.js';
+import userRoutes from './routes/user.routes.js';
 
 const app = express();
 
@@ -30,15 +30,15 @@ app.use(mongoSanitize());
 // Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// RUTAS (Se inyectarán en la Fase 7)
-// app.use('/api/user', userRoutes);
+// RUTAS
+app.use('/api/user', userRoutes);
 
 // Manejador de rutas no encontradas (404)
 app.all('*', (req, res, next) => {
-  // next(AppError.notFound(`No se puede encontrar ${req.originalUrl} en este servidor.`));
+  next(AppError.notFound(`No se puede encontrar ${req.originalUrl} en este servidor.`));
 });
 
 // Middleware centralizado de errores
-// app.use(globalErrorHandler);
+app.use(globalErrorHandler);
 
 export default app;
