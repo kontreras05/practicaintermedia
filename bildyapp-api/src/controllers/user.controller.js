@@ -58,24 +58,31 @@ export const register = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
+    // 1. Verificar si el email ya existe en la base de datos (Conflict)
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return next(AppError.conflict('El email ya está registrado.'));
     }
 
+    // 2. Cifrar la contraseña usando bcryptjs (factor de coste 12 recomendado)
     const hashedPassword = await bcrypt.hash(password, 12);
+    
+    // 3. Generar código de validación inicial
     const verificationCode = generateCode();
 
+    // 4. Crear el documento del usuario con estado pendiente
     const newUser = await User.create({
       email,
       password: hashedPassword,
       verificationCode,
       verificationAttempts: 3,
-      role: 'admin' // Por defecto
+      role: 'admin' // El usuario que se registra es Admin por defecto
     });
 
+    // 5. Notificar al sistema de eventos (logs por consola)
     notificationService.emit('user:registered', { email: newUser.email });
 
+    // 6. Generar JWT y enviar respuesta
     createSendTokens(newUser, res);
   } catch (error) {
     next(error);
@@ -91,20 +98,24 @@ export const validateEmail = async (req, res, next) => {
     const { code } = req.body;
     const user = req.user;
 
+    // 1. Verificar si el usuario ya está verificado para evitar re-validaciones
     if (user.status === 'verified') {
       return next(AppError.badRequest('El usuario ya está verificado.'));
     }
 
+    // 2. Verificar si le quedan intentos disponibles (Máximo 3 errores)
     if (user.verificationAttempts <= 0) {
       return next(AppError.tooManyRequests('Has agotado los intentos de verificación.'));
     }
 
+    // 3. Validar si el código proporcionado coincide con el de la BD
     if (user.verificationCode !== code) {
-      user.verificationAttempts -= 1;
+      user.verificationAttempts -= 1; // Decremento de intentos si falla
       await user.save({ validateBeforeSave: false });
       return next(AppError.badRequest(`Código incorrecto. Intentos restantes: ${user.verificationAttempts}`));
     }
 
+    // 4. Si es correcto, actualizar estado y limpiar el código de la BD
     user.status = 'verified';
     user.verificationCode = undefined;
     await user.save({ validateBeforeSave: false });
@@ -175,6 +186,7 @@ export const updateCompanyData = async (req, res, next) => {
     const { name, cif, address, isFreelance } = req.body;
     const user = req.user;
 
+    // Determinamos el CIF y nombre basándonos en si es Autónomo (Freelance) o Empresa
     let targetCif = isFreelance ? user.nif : cif;
     let targetName = isFreelance ? (user.fullName || user.name) : name;
     let targetAddress = isFreelance ? user.address : address;
@@ -183,9 +195,11 @@ export const updateCompanyData = async (req, res, next) => {
       return next(AppError.badRequest('Requerimos proveer un CIF o tener un NIF previo si eres freelance.'));
     }
 
+    // Intentamos buscar si la compañía ya existe por CIF
     let company = await Company.findOne({ cif: targetCif });
 
     if (!company) {
+      // Caso A: La empresa no existe -> Se crea y el usuario es el DUEÑO (Admin)
       company = await Company.create({
         owner: user._id,
         name: targetName,
@@ -193,11 +207,12 @@ export const updateCompanyData = async (req, res, next) => {
         address: targetAddress,
         isFreelance
       });
-      // El usuario mantiene rol 'admin' al ser el owner
     } else {
-      user.role = 'guest'; // Se une a una empresa existente
+      // Caso B: La empresa ya existe -> El usuario se une y pasa a ser INVITADO (Guest)
+      user.role = 'guest';
     }
 
+    // Vinculamos el ID de la compañía al perfil del usuario
     user.company = company._id;
     await user.save({ validateBeforeSave: false });
 
